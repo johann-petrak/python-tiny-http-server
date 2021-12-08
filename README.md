@@ -1,5 +1,14 @@
 # python-tiny-http-server
 
+[![PyPi version](https://img.shields.io/pypi/v/tiny-http-server.svg)](https://pypi.python.org/pypi/tiny-http-server/)
+[![Python compatibility](https://img.shields.io/pypi/pyversions/tiny-http-server.svg)](https://pypi.python.org/pypi/tiny-http-server/)
+[![Downloads](https://static.pepy.tech/personalized-badge/tiny-http-server?period=week&units=none&left_color=blue&right_color=yellow&left_text=Downloads/week)](https://pepy.tech/project/tiny-http-server)
+[![PyPI - Downloads](https://img.shields.io/pypi/dm/tiny-http-server)](https://pypistats.org/packages/tiny-http-server)
+[![License](https://img.shields.io/github/license/GateNLP/python-tiny-http-server.svg)](LICENSE)
+[![Updates](https://pyup.io/repos/github/GateNLP/python-gatenlp/shield.svg)](https://pyup.io/repos/github/GateNLP/python-tiny-http-server/)
+[![Python 3](https://pyup.io/repos/github/GateNLP/python-tiny-http-server/python-3-shield.svg)](https://pyup.io/repos/github/GateNLP/python-tiny-http-server/)
+
+
 A simple ad-hoc HTTP server for serving static pages,
 similar to `python -m http.server`.
 
@@ -37,10 +46,17 @@ optional arguments:
   --cert CERT, -c CERT  If specified, the cert-file to use, enables https
   --key KEY, -k KEY     Key file, needed if --cert is specified
 ```
+## Using Basic Authentication
+
+Whenever at least one user/password pair is added through 
+either the `--auth` option or as line in the file specified
+via `--authfile`, basic authentication is enabled. 
+This can be combined with HTTPs (see below).
 
 ## Using HTTPS
 
-This is experimental. It requires a cert and key file.
+This is experimental. It requires a cert and key file. 
+This gets enabled whenever the `--cert` option is specified.
 
 For testing this can be created for `localhost` using the command:
 ```bash

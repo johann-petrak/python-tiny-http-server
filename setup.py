@@ -4,11 +4,10 @@
 import sys
 import os
 from setuptools import setup, find_packages
-import re
 from tiny_http_server import __version__
 
-if sys.version_info < (3, 4):
-    sys.exit("ERROR: tiny-http-server requires Python 3.4+")
+if sys.version_info < (3, 7):
+    sys.exit("ERROR: tiny-http-server requires Python 3.7+")
 
 here = os.path.abspath(os.path.dirname(__file__))
 with open(os.path.join(here, "README.md")) as f:
@@ -16,7 +15,7 @@ with open(os.path.join(here, "README.md")) as f:
 
 
 setup(
-    name="gatenlp",
+    name="tiny-http-server",
     version=__version__,
     author="Johann Petrak",
     author_email="johann.petrak@gmail.com",
@@ -25,7 +24,7 @@ setup(
     description="Simple ad-hoc static web page server with basic auth and https support",
     long_description=readme,
     long_description_content_type="text/markdown",
-    python_requires=">=3.4",
+    python_requires=">=3.7",
     platforms="any",
     license="MIT License",
     packages=find_packages(),
@@ -38,9 +37,6 @@ setup(
         # "Development Status :: 2 - Pre-Alpha",
         # "Development Status :: 1 - Planning",
         "License :: OSI Approved :: MIT License",
-        "Programming Language :: Python :: 3.4",
-        "Programming Language :: Python :: 3.5",
-        "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
