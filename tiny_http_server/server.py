@@ -84,7 +84,7 @@ def main():
 
     parser = argparse.ArgumentParser(
         description="Tiny HTTP server with optional basic authentication and https support.",
-        epilog="See https://github.com/johann-petrak/python-tiny-http-server"
+        epilog="See https://github.com/johann-petrak/python-tiny-http-server/blob/main/README.md"
     )
     parser.add_argument("--cgi", action="store_true", help="Run as CGI Server")
     parser.add_argument("--bind", "-b", metavar="ADDRESS", default="127.0.0.1",
