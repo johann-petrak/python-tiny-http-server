@@ -46,6 +46,10 @@ optional arguments:
   --cert CERT, -c CERT  If specified, the cert-file to use, enables https
   --key KEY, -k KEY     Key file, needed if --cert is specified
 ```
+
+NOTE: specifying the user/password on the command line is insecure if other users are on the same system. The `--authfile` option or use of environment variables is a better choice in that case. 
+
+
 ## Using Basic Authentication
 
 Whenever at least one user/password pair is added through 
