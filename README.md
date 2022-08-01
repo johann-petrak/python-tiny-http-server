@@ -4,7 +4,7 @@
 [![Python compatibility](https://img.shields.io/pypi/pyversions/tiny-http-server.svg)](https://pypi.python.org/pypi/tiny-http-server/)
 [![Downloads](https://static.pepy.tech/personalized-badge/tiny-http-server?period=week&units=none&left_color=blue&right_color=yellow&left_text=Downloads/week)](https://pepy.tech/project/tiny-http-server)
 [![PyPI - Downloads](https://img.shields.io/pypi/dm/tiny-http-server)](https://pypistats.org/packages/tiny-http-server)
-[![License](https://img.shields.io/github/license/GateNLP/python-tiny-http-server.svg)](LICENSE)
+[![License](https://img.shields.io/github/license/johann-petrak/python-tiny-http-server.svg)](LICENSE)
 
 
 
