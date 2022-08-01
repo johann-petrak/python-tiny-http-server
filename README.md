@@ -5,8 +5,7 @@
 [![Downloads](https://static.pepy.tech/personalized-badge/tiny-http-server?period=week&units=none&left_color=blue&right_color=yellow&left_text=Downloads/week)](https://pepy.tech/project/tiny-http-server)
 [![PyPI - Downloads](https://img.shields.io/pypi/dm/tiny-http-server)](https://pypistats.org/packages/tiny-http-server)
 [![License](https://img.shields.io/github/license/GateNLP/python-tiny-http-server.svg)](LICENSE)
-[![Updates](https://pyup.io/repos/github/GateNLP/python-gatenlp/shield.svg)](https://pyup.io/repos/github/GateNLP/python-tiny-http-server/)
-[![Python 3](https://pyup.io/repos/github/GateNLP/python-tiny-http-server/python-3-shield.svg)](https://pyup.io/repos/github/GateNLP/python-tiny-http-server/)
+
 
 
 A simple ad-hoc HTTP server for serving static pages,
