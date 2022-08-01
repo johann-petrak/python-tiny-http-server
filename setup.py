@@ -37,7 +37,7 @@ setup(
         # "Development Status :: 2 - Pre-Alpha",
         # "Development Status :: 1 - Planning",
         "License :: OSI Approved :: MIT License",
-        "Programming Language :: Python :: 3.6",
+        # !! Uses ThreadingHTTPServer which is not available in 3.6
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
