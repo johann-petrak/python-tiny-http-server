@@ -6,7 +6,7 @@ import os
 from setuptools import setup, find_packages
 from tiny_http_server import __version__
 
-if sys.version_info < (3, 6):
+if sys.version_info < (3, 7):
     sys.exit("ERROR: tiny-http-server requires Python 3.6+")
 
 here = os.path.abspath(os.path.dirname(__file__))
@@ -24,7 +24,7 @@ setup(
     description="Simple ad-hoc static web page server with basic auth and https support",
     long_description=readme,
     long_description_content_type="text/markdown",
-    python_requires=">=3.6",
+    python_requires=">=3.7",
     platforms="any",
     license="MIT License",
     packages=find_packages(),
