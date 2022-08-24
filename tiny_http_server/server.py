@@ -19,7 +19,7 @@
 
 # TODO: set auth header to None at first visit and also after some timeout:
 # self.headers.replace_header('Authorization', None)
-
+from logging import getLogger, basicConfig, DEBUG, INFO
 from functools import partial
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer, CGIHTTPRequestHandler
 from http.server import test as server_test
@@ -36,16 +36,17 @@ class AuthHTTPRequestHandler(SimpleHTTPRequestHandler):
 
     def __init__(self, *args, **kwargs):
         self.users = kwargs.pop("users")
+        self.logger = kwargs.pop("logger")
         super().__init__(*args, **kwargs)
 
     def do_HEAD(self):
-        print("do_HEAD")
+        self.logger.debug("do_HEAD")
         self.send_response(200)
         self.send_header("Content-type", "text/html")
         self.end_headers()
 
     def do_AUTHHEAD(self):
-        print("do_AUTHHEAD")
+        self.logger.debug("do_AUTHHEAD")
         self.send_response(401)
         self.send_header("WWW-Authenticate", 'Basic realm="Test"')
         self.send_header("Content-type", "text/html")
@@ -55,7 +56,7 @@ class AuthHTTPRequestHandler(SimpleHTTPRequestHandler):
         """ Present frontpage with user authentication. """
         print("do_GET", self.headers)
         if self.headers.get("Authorization") == None:
-            print("do_GET: no authorization")
+            self.logger.debug("do_GET: no authorization")
             self.do_NOTAUTH()
         elif self.headers.get("Authorization") is not None:
             auth = self.headers.get("Authorization")
@@ -65,12 +66,12 @@ class AuthHTTPRequestHandler(SimpleHTTPRequestHandler):
             auth = auth[6:]
             user, passwd = base64.b64decode(auth).decode("UTF-8").split(":")
             if self.users.get(user) == passwd:
-                print("do_GET: correct Basic auth")
+                self.logger.debug("do_GET: correct Basic auth")
                 SimpleHTTPRequestHandler.do_GET(self)
             else:
                 self.do_NOTAUTH()
         else:
-            print("do_GET: other stuff")
+            self.logger.debug("do_GET: other stuff")
             self.do_NOTAUTH()
 
     def do_NOTAUTH(self):
@@ -104,8 +105,12 @@ def main():
                         help="If specified, the cert-file to use, enables https")
     parser.add_argument("--key", "-k",
                         help="Key file, needed if --cert is specified")
+    parser.add_argument("--debug", action="store_true",
+                        help="If specified output some debugging information")
     args = parser.parse_args()
 
+    basicConfig(level=DEBUG if args.debug else INFO)
+    logger = getLogger("tiny-http-server")
     allusers = {}
     if args.auth:
         u, p = args.auth.split(":")
@@ -126,21 +131,26 @@ def main():
             return super().server_bind()
 
     if args.cgi:
+        logger.debug("Using CGIHTTPRequestHandler")
         handler_class = CGIHTTPRequestHandler
     elif len(allusers) == 0:
+        logger.debug("Using SimpleHTTPRequestHandler")
         handler_class = partial(SimpleHTTPRequestHandler,
                                 directory=args.directory)
     else:
+        logger.debug("Using AuthHTTPRequestHandler")
         handler_class = partial(
             AuthHTTPRequestHandler,
             users=allusers,
             directory=args.directory,
+            logger=logger,
         )
     if args.cert:
+        logger.debug("Wrapping handler for HTTPS")
         httpd = socketserver.TCPServer(("", args.port), handler_class)
-        httpd.socket = ssl.wrap_socket (httpd.socket, certfile=args.cert, keyfile=args.key, server_side=True) 
+        httpd.socket = ssl.wrap_socket(httpd.socket, certfile=args.cert, keyfile=args.key, server_side=True)
         sa = httpd.socket.getsockname()
-        print("Serving HTTP on", sa[0], "port", sa[1], "...")
+        print("Serving HTTPS on", sa[0], "port", sa[1], "...")
         httpd.serve_forever()
     else:
         server_test(HandlerClass=handler_class, ServerClass=DualStackServer, port=args.port, bind=args.bind)
