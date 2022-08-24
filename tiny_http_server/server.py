@@ -19,10 +19,10 @@
 
 # TODO: set auth header to None at first visit and also after some timeout:
 # self.headers.replace_header('Authorization', None)
+import sys
 from logging import getLogger, basicConfig, DEBUG, INFO
 from functools import partial
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer, CGIHTTPRequestHandler
-from http.server import test as server_test
 import base64
 import os
 import ssl
@@ -30,38 +30,49 @@ import socketserver
 import contextlib
 import socket
 
-
+DEFAULT_EXTENSIONS_UPDATES = {
+    ".md": "text/plain",
+}
 class AuthHTTPRequestHandler(SimpleHTTPRequestHandler):
     """ Main class to present webpages and authentication. """
 
     def __init__(self, *args, **kwargs):
         self.users = kwargs.pop("users")
         self.logger = kwargs.pop("logger")
+        self.global_var = kwargs.pop("global_var")
+        self.logger.debug(f"RUNNING INIT!!!! self={self}")
         super().__init__(*args, **kwargs)
+        self.extensions_map.update(DEFAULT_EXTENSIONS_UPDATES)
+        self.logger.debug(f"extensions map is now: {self.extensions_map}")
 
     def do_HEAD(self):
         self.logger.debug("do_HEAD")
         self.send_response(200)
-        self.send_header("Content-type", "text/html")
         self.end_headers()
 
     def do_AUTHHEAD(self):
         self.logger.debug("do_AUTHHEAD")
         self.send_response(401)
         self.send_header("WWW-Authenticate", 'Basic realm="Test"')
-        self.send_header("Content-type", "text/html")
         self.end_headers()
 
     def do_GET(self):
         """ Present frontpage with user authentication. """
-        print("do_GET", self.headers)
-        if self.headers.get("Authorization") == None:
-            self.logger.debug("do_GET: no authorization")
-            self.do_NOTAUTH()
+        ahdr = self.headers.get("Authorization")
+        self.logger.debug(f"do_GET: first={self.global_var}, ahdr={ahdr},\nheaders={self.headers}")
+        if self.global_var["first"] or self.headers.get("Authorization") == None:
+            if self.global_var["first"]:
+                self.global_var["first"] = False
+                self.logger.debug(f"First time, setting to false")
+            else:
+                self.logger.debug("do_GET: no authorization")
+            self.do_AUTHHEAD()
+            self.logger.debug("After do_AUTHHEAD")
         elif self.headers.get("Authorization") is not None:
             auth = self.headers.get("Authorization")
+            self.logger.debug(f"Got auth header: >>{auth}<<")
             if not auth.startswith("Basic "):
-                self.do_NOTAUTH()
+                self.do_AUTHHEAD()
                 return
             auth = auth[6:]
             user, passwd = base64.b64decode(auth).decode("UTF-8").split(":")
@@ -69,15 +80,11 @@ class AuthHTTPRequestHandler(SimpleHTTPRequestHandler):
                 self.logger.debug("do_GET: correct Basic auth")
                 SimpleHTTPRequestHandler.do_GET(self)
             else:
-                self.do_NOTAUTH()
+                self.logger.debug("do_GET: WRONG Basic auth")
+                self.do_AUTHHEAD()
         else:
-            self.logger.debug("do_GET: other stuff")
-            self.do_NOTAUTH()
-
-    def do_NOTAUTH(self):
-        self.do_AUTHHEAD()
-        self.wfile.write(self.headers.get("Authorization").encode())
-        self.wfile.write(b"authentication problem")
+            self.logger.debug("do_GET: other stuff, this should never happen")
+            raise Exception("This should not happen ...")
 
 
 def main():
@@ -119,7 +126,18 @@ def main():
         with open(args.authfile, "rt") as infp:
             for line in infp:
                 line = line.rstrip("\n\r")
-                u, p = line.split(":")
+                lineorig = line
+                line = line.strip()
+                if not line:
+                    continue
+                if line.startswith("#"):
+                    continue
+                if ":" in line:
+                    u, p = line.split(":")
+                else:
+                    raise Exception(f"Odd line in {args.authfile}: >>{lineorig}<<")
+                if u in allusers:
+                    raise Exception(f"Duplicate entry in {args.authfile} for user {u}")
                 allusers[u] = p
 
     class DualStackServer(ThreadingHTTPServer):
@@ -139,21 +157,37 @@ def main():
                                 directory=args.directory)
     else:
         logger.debug("Using AuthHTTPRequestHandler")
+        # NOTE: the handler_class gets re-allocated multiple times, so to find the very first
+        # request after this script gets started, we use a hash as a global variable
+        GLOBAL = dict(first=True)
         handler_class = partial(
             AuthHTTPRequestHandler,
             users=allusers,
             directory=args.directory,
             logger=logger,
+            global_var=GLOBAL,
         )
     if args.cert:
         logger.debug("Wrapping handler for HTTPS")
         httpd = socketserver.TCPServer(("", args.port), handler_class)
         httpd.socket = ssl.wrap_socket(httpd.socket, certfile=args.cert, keyfile=args.key, server_side=True)
         sa = httpd.socket.getsockname()
-        print("Serving HTTPS on", sa[0], "port", sa[1], "...")
+        logger.info(f"Serving HTTPS on {sa[0]}, port {sa[1]} ...")
         httpd.serve_forever()
     else:
-        server_test(HandlerClass=handler_class, ServerClass=DualStackServer, port=args.port, bind=args.bind)
+        infos = socket.getaddrinfo(args.bind, args.port, type=socket.SOCK_STREAM, flags=socket.AI_PASSIVE)
+        family, type, proto, canonname, sockaddr = next(iter(infos))
+        DualStackServer.address_family = family
+        handler_class.protocol_version = "HTTP/1.0"
+        with DualStackServer(sockaddr, handler_class) as httpd:
+            host, port = httpd.socket.getsockname()[:2]
+            url_host = f'[{host}]' if ':' in host else host
+            logger.info(f"Serving HTTP on {host}, port {port} (http://{url_host}:{port}/) ...")
+            try:
+                httpd.serve_forever()
+            except KeyboardInterrupt:
+                logger.info("\nKeyboard interrupt received, exiting.")
+                sys.exit(0)
 
 
 if __name__ == "__main__":
