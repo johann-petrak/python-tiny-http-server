@@ -20,6 +20,8 @@
 # TODO: set auth header to None at first visit and also after some timeout:
 # self.headers.replace_header('Authorization', None)
 import sys
+import signal
+from typing import Any
 from logging import getLogger, basicConfig, DEBUG, INFO
 from functools import partial
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer, CGIHTTPRequestHandler
@@ -33,15 +35,27 @@ import socket
 DEFAULT_EXTENSIONS_UPDATES = {
     ".md": "text/plain",
 }
-class AuthHTTPRequestHandler(SimpleHTTPRequestHandler):
+
+class MySimpleHTTPRequestHandler(SimpleHTTPRequestHandler):
+
+    def __init__(self, *args, **kwargs):
+        self.logger = kwargs.pop("logger")
+        super().__init__(*args, **kwargs)
+
+    def log_message(self, format: str, *args: Any) -> None:
+        if len(args) == 0:
+            self.logger.info(format)
+        else:
+            self.logger.info(format % args)
+
+class AuthHTTPRequestHandler(MySimpleHTTPRequestHandler):
     """ Main class to present webpages and authentication. """
 
     def __init__(self, *args, **kwargs):
         self.users = kwargs.pop("users")
-        self.logger = kwargs.pop("logger")
         self.global_var = kwargs.pop("global_var")
-        self.logger.debug(f"RUNNING INIT!!!! self={self}")
         super().__init__(*args, **kwargs)
+        self.logger.debug(f"RUNNING INIT!!!! self={self}")
         self.extensions_map.update(DEFAULT_EXTENSIONS_UPDATES)
         self.logger.debug(f"extensions map is now: {self.extensions_map}")
 
@@ -148,12 +162,20 @@ def main():
                     socket.IPPROTO_IPV6, socket.IPV6_V6ONLY, 0)
             return super().server_bind()
 
+    def mysignalhandler(sig, frame):
+        logger.info(f"Program interrupted by signal {sig}, terminating with exit code 1 ...")
+        sys.exit(1)
+
+    # signal.signal(signal.SIGINT, mysignalhandler)
+    signal.signal(signal.SIGHUP, mysignalhandler)
+
     if args.cgi:
         logger.debug("Using CGIHTTPRequestHandler")
         handler_class = CGIHTTPRequestHandler
     elif len(allusers) == 0:
         logger.debug("Using SimpleHTTPRequestHandler")
-        handler_class = partial(SimpleHTTPRequestHandler,
+        handler_class = partial(MySimpleHTTPRequestHandler,
+                                logger=logger,
                                 directory=args.directory)
     else:
         logger.debug("Using AuthHTTPRequestHandler")
@@ -186,7 +208,7 @@ def main():
             try:
                 httpd.serve_forever()
             except KeyboardInterrupt:
-                logger.info("\nKeyboard interrupt received, exiting.")
+                logger.info("Keyboard interrupt / INT signal received, exiting.")
                 sys.exit(0)
 
 
