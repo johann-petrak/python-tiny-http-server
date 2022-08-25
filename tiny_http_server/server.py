@@ -55,9 +55,9 @@ class AuthHTTPRequestHandler(MySimpleHTTPRequestHandler):
         self.users = kwargs.pop("users")
         self.global_var = kwargs.pop("global_var")
         super().__init__(*args, **kwargs)
-        self.logger.debug(f"RUNNING INIT!!!! self={self}")
         self.extensions_map.update(DEFAULT_EXTENSIONS_UPDATES)
-        self.logger.debug(f"extensions map is now: {self.extensions_map}")
+        if self.global_var["first"]:
+            self.logger.debug(f"extensions map is now: {self.extensions_map}")
 
     def do_HEAD(self):
         self.logger.debug("do_HEAD")
@@ -92,6 +92,7 @@ class AuthHTTPRequestHandler(MySimpleHTTPRequestHandler):
             user, passwd = base64.b64decode(auth).decode("UTF-8").split(":")
             if self.users.get(user) == passwd:
                 self.logger.debug("do_GET: correct Basic auth")
+                self.logger.debug(f"Request path: {self.path}")
                 SimpleHTTPRequestHandler.do_GET(self)
             else:
                 self.logger.debug("do_GET: WRONG Basic auth")
@@ -132,6 +133,7 @@ def main():
 
     basicConfig(level=DEBUG if args.debug else INFO)
     logger = getLogger("tiny-http-server")
+    logger.debug(f"Logging mode DEBUG enabled")
     allusers = {}
     if args.auth:
         u, p = args.auth.split(":")
