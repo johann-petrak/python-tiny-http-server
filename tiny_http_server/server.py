@@ -90,10 +90,10 @@ class MySimpleHTTPRequestHandler(SimpleHTTPRequestHandler):
         try:
             displaypath = urllib.parse.unquote(self.path,
                                                errors='surrogatepass')
-            self.logger.info(f"list_directory displaypath/surrogatepass {displaypath}")
+            self.logger.debug(f"list_directory displaypath/surrogatepass {displaypath}")
         except UnicodeDecodeError:
             displaypath = urllib.parse.unquote(path)
-            self.logger.info(f"list_directory displaypath/default {displaypath}")
+            self.logger.debug(f"list_directory displaypath/default {displaypath}")
         displaypath = html.escape(displaypath, quote=False)
         self.logger.debug(f"list_directory displaypath/escape {displaypath}")
         enc = sys.getfilesystemencoding()
@@ -136,6 +136,7 @@ class MySimpleHTTPRequestHandler(SimpleHTTPRequestHandler):
 
     def receive_upload(self, path):
         # NOTE: this code has been copied/adapted from https://github.com/Densaugeo/uploadserver
+        self.logger.debug(f"Receiving file(s)")
         result = (HTTPStatus.INTERNAL_SERVER_ERROR, 'Server error')
         form = cgi.FieldStorage(fp=self.rfile,
                                 headers=self.headers, environ={'REQUEST_METHOD': 'POST'})
@@ -152,20 +153,33 @@ class MySimpleHTTPRequestHandler(SimpleHTTPRequestHandler):
                     self.logger.info(f"Upload of {filename} to {tofile} not allowed: file exists")
                     result = (HTTPStatus.BAD_REQUEST, f"File {filename} already exists and override disabled")
                     break
-                with open(pathlib.Path(path) / filename, 'wb') as f:
+                with open(tofile, 'wb') as f:
                     f.write(field.file.read())
-                    self.log_message('Upload of "{}" accepted'.format(filename))
+                    self.logger.info(f'Upload of "{filename}" to {tofile}')
                     result = (HTTPStatus.NO_CONTENT, None)
         return result
 
+    def do_GET(self):
+        path = self.translate_path(self.path)
+        # if there is a favicon, use it, otherwise ignore the request for it.
+        if self.path == "/favicon.ico" and not os.path.exists(path):
+            return
+        self.logger.info(f"Requested file {path} for {self.path}")
+        super().do_GET()
+
     def do_POST(self):
         # NOTE: this code has been copied/adapted from https://github.com/Densaugeo/uploadserver
+        self.logger.debug("do_POST: got POST request")
         if not self.enable_upload:
+            self.logger.debug("do_POST: enable_upload is false, rejecting upload")
             self.send_error(HTTPStatus.NOT_FOUND, 'Upload/POST not allowed')
+            return
         # check if the request comes from a directory path
         path = self.translate_path(self.path)
         if not os.path.isdir(path):
             self.send_error(HTTPStatus.NOT_FOUND, 'Upload/POST not allowed: not a directory')
+            self.logger.info(f"Rejecting upload: {path} not a directory")
+            return
         result = self.receive_upload(path)
         if result[0] < HTTPStatus.BAD_REQUEST:
             self.send_response(result[0], result[1])
