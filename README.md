@@ -44,11 +44,23 @@ optional arguments:
                         Add username:password to accepted authentication
   --cert CERT, -c CERT  If specified, the cert-file to use, enables https
   --key KEY, -k KEY     Key file, needed if --cert is specified
+  --enable-upload       If specified, allows file uploads
+  --enable-override     If specified and --enable-upload, allows to override existing files
   --debug               If specified output some debugging information
 ```
 
-NOTE: specifying the user/password on the command line is insecure if other users are on the same system. The `--authfile` option or use of environment variables is a better choice in that case. 
+Notes:
 
+* CAUTION: do not use this program if security, safety or stability are important, this is just a very simply tiny 
+  program for the convenience of providing a quick ad-hoc server to trusted users. 
+* specifying the user/password on the command line is insecure if other users are on the same system. The `--authfile` option or use of environment variables is a better choice in that case.
+* If `--enable-upload` is specified, all directory listing pages allow to upload files into the shown directory. 
+  Replacing existing files is only allowed if `--enable-override` is specified in addition.
+* CAUTION: `--enable-upload` may be dangerous, use with caution!
+* the program uses a sinlge process and no threading, so if several clients use the server, one may have
+  to wait for all others to complete or may get rejected.
+* Uploading large files will load the whole file into memory which can completely bog down the machine this
+  program runs on. Do not use the upload options if this could cause problems or if users may abuse this. 
 
 ## Using Basic Authentication
 
@@ -67,3 +79,13 @@ For testing this can be created for `localhost` using the command:
 openssl req -x509 -out localhost.crt -keyout localhost.key -newkey rsa:2048 -nodes -sha256 -subj '/CN=localhost' -extensions EXT -config <( printf "[dn]\nCN=localhost\n[req]\ndistinguished_name = dn\n[EXT]\nsubjectAltName=DNS:localhost\nkeyUsage=digitalSignature\nextendedKeyUsage=serverAuth")
 ```
 
+## Kudos
+
+This software has been inspired and uses adapted code from the following sources:
+
+* https://github.com/Densaugeo/uploadserver
+* https://gist.github.com/lionelyoung/8cad668d4d30fa392842fa08d50d2bc6
+* https://gist.github.com/fxsjy/5465353
+* https://github.com/goya191/SimpleAuthServerSSL.py
+* https://stackoverflow.com/questions/30109449/what-does-sslerror-ssl-pem-lib-ssl-c2532-mean-using-the-python-ssl-libr
+* https://github.com/tianhuil/SimpleHTTPAuthServer
