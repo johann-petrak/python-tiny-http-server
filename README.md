@@ -15,6 +15,7 @@ This supports:
 * Basic authentication, for one or more user:password pairs, which can be specified from the command line and/or be read in from a file.
 * Support for HTTPS using a cert and key file
 * Support to run as CGI server, but without basic auth / HTTPS for now
+* Support for optionally uploading files, with or without the ability to override existing files
 
 ## Installation
 
