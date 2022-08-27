@@ -308,13 +308,6 @@ def main():
                     socket.IPPROTO_IPV6, socket.IPV6_V6ONLY, 0)
             return super().server_bind()
 
-    def mysignalhandler(sig, frame):
-        logger.info(f"Program interrupted by signal {sig}, terminating with exit code 1 ...")
-        sys.exit(1)
-
-    # signal.signal(signal.SIGINT, mysignalhandler)
-    signal.signal(signal.SIGHUP, mysignalhandler)
-
     if args.cgi:
         logger.debug("Using CGIHTTPRequestHandler")
         handler_class = CGIHTTPRequestHandler
