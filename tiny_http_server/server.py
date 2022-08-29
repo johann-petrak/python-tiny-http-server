@@ -271,6 +271,8 @@ def main():
                         help="If specified, allows file uploads")
     parser.add_argument("--enable-override", action="store_true",
                         help="If specified and --enable-upload, allows to override existing files")
+    parser.add_argument("--no-force-auth", action="store_true",
+                        help="If specified, do not force authentication after server restart.")
     parser.add_argument("--debug", action="store_true",
                         help="If specified output some debugging information")
     args = parser.parse_args()
@@ -322,7 +324,7 @@ def main():
         logger.debug("Using AuthHTTPRequestHandler")
         # NOTE: the handler_class gets re-allocated multiple times, so to find the very first
         # request after this script gets started, we use a hash as a global variable
-        GLOBAL = dict(first=True)
+        GLOBAL = dict(first=not args.no_force_auth)
         handler_class = partial(
             AuthHTTPRequestHandler,
             users=allusers,

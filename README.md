@@ -47,8 +47,18 @@ optional arguments:
   --key KEY, -k KEY     Key file, needed if --cert is specified
   --enable-upload       If specified, allows file uploads
   --enable-override     If specified and --enable-upload, allows to override existing files
+  --no-force-auth       If specified, do not force authentication after server
+                        restart.
   --debug               If specified output some debugging information
 ```
+
+Details:
+
+* `--no-force-auth`: the default behaviour when using basic auth is that 
+    after restarting the server, authentication is always enforced before the 
+    first response. If this parameter is specified, the server will accept
+    a connection if the browser provides the basich auth credentials from the
+    previous server session.
 
 Notes:
 
